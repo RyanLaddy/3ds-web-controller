@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3DS Web Controller</title>
+    <style>
+        button {
+            width: 80px;
+            height: 80px;
+            font-size: 24px;
+            margin: 10px;
+            border-radius: 10px;
+        }
+        #buttons {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 300px;
+            margin: 50px auto;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">3DS Web Controller</h2>
+    <div id="buttons">
+        <button id="btnA">A</button>
+        <button id="btnB">B</button>
+        <button id="btnUp">Up</button>
+        <button id="btnDown">Down</button>
+        <button id="btnLeft">Left</button>
+        <button id="btnRight">Right</button>
+    </div>
+
+    <script>
+        // Connect to WebSocket server on your PC (change IP and port accordingly)
+        const ws = new WebSocket("ws://YOUR_PC_IP:8080");
+
+        ws.onopen = () => console.log("Connected to WebSocket server");
+        ws.onclose = () => console.log("Disconnected from WebSocket server");
+
+        function send(msg) {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(msg);
+                console.log("Sent:", msg);
+            } else {
+                console.log("WebSocket not open");
+            }
+        }
+
+        // Map buttons to send input on press and release
+        const buttons = [
+            {id: "btnA", name: "A"},
+            {id: "btnB", name: "B"},
+            {id: "btnUp", name: "UP"},
+            {id: "btnDown", name: "DOWN"},
+            {id: "btnLeft", name: "LEFT"},
+            {id: "btnRight", name: "RIGHT"}
+        ];
+
+        buttons.forEach(btn => {
+            const element = document.getElementById(btn.id);
+            element.addEventListener('mousedown', () => send(btn.name + ":1"));
+            element.addEventListener('mouseup', () => send(btn.name + ":0"));
+            element.addEventListener('touchstart', () => send(btn.name + ":1"));
+            element.addEventListener('touchend', () => send(btn.name + ":0"));
+        });
+    </script>
+</body>
+</html>
