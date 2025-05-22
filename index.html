@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3DS Web Controller</title>
+    <title>3DS Web Controller with Xbox Support</title>
     <style>
         button {
             width: 80px;
@@ -31,7 +31,6 @@
     </div>
 
     <script>
-        // Connect to WebSocket server on your PC (change IP and port accordingly)
         const ws = new WebSocket("ws://YOUR_PC_IP:8080");
 
         ws.onopen = () => console.log("Connected to WebSocket server");
@@ -41,12 +40,10 @@
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(msg);
                 console.log("Sent:", msg);
-            } else {
-                console.log("WebSocket not open");
             }
         }
 
-        // Map buttons to send input on press and release
+        // Map buttons to send input on press and release (for touchscreen buttons)
         const buttons = [
             {id: "btnA", name: "A"},
             {id: "btnB", name: "B"},
@@ -62,6 +59,48 @@
             element.addEventListener('mouseup', () => send(btn.name + ":0"));
             element.addEventListener('touchstart', () => send(btn.name + ":1"));
             element.addEventListener('touchend', () => send(btn.name + ":0"));
+        });
+
+        // Gamepad support
+        let prevButtonsState = {};
+
+        function pollGamepads() {
+            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+            if (gamepads.length > 0) {
+                const gp = gamepads[0];
+                if (gp) {
+                    gp.buttons.forEach((button, index) => {
+                        const pressed = button.pressed;
+                        if (pressed !== prevButtonsState[index]) {
+                            // Map button indices to your controller buttons
+                            let btnName = null;
+                            switch(index) {
+                                case 0: btnName = "A"; break;      // A button
+                                case 1: btnName = "B"; break;      // B button
+                                case 12: btnName = "UP"; break;    // D-pad Up
+                                case 13: btnName = "DOWN"; break;  // D-pad Down
+                                case 14: btnName = "LEFT"; break;  // D-pad Left
+                                case 15: btnName = "RIGHT"; break; // D-pad Right
+                                // Add more buttons if needed
+                            }
+                            if (btnName) {
+                                send(btnName + ":" + (pressed ? "1" : "0"));
+                            }
+                            prevButtonsState[index] = pressed;
+                        }
+                    });
+                }
+            }
+            requestAnimationFrame(pollGamepads);
+        }
+
+        window.addEventListener("gamepadconnected", e => {
+            console.log("Gamepad connected:", e.gamepad);
+            pollGamepads();
+        });
+
+        window.addEventListener("gamepaddisconnected", e => {
+            console.log("Gamepad disconnected:", e.gamepad);
         });
     </script>
 </body>
